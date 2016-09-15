@@ -3,6 +3,11 @@ package com.sudexpress.test.dzone.chemical;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Scanner;
+
 import org.junit.Test;
 
 public class ChemicalTest extends AbstractTest<Chemical> {
@@ -57,4 +62,58 @@ public class ChemicalTest extends AbstractTest<Chemical> {
 	public void charArrayOf() throws Exception {
 		assertThat(this.test.charArrayOf("Abc"), is(new char[] { 'a', 'b', 'c' }));
 	}
+
+	@Test
+	public void buildSymbols() throws Exception {
+		final List<String> symbols = this.test.buildSymbols("Iron");
+
+		assertThat(symbols.get(0), is("Ir"));
+		assertThat(symbols.get(1), is("Io"));
+		assertThat(symbols.get(2), is("In"));
+		assertThat(symbols.get(3), is("Ro"));
+		assertThat(symbols.get(4), is("Rn"));
+		assertThat(symbols.get(5), is("On"));
+	}
+
+	@Test
+	public void register() {
+		this.test.register("Chlorine", "Chromium", "Cesium", "Cerium");
+
+		assertThat(this.test.get("Ch"), is("Chlorine"));
+		assertThat(this.test.get("Cr"), is("Chromium"));
+		assertThat(this.test.get("Ce"), is("Cesium"));
+		assertThat(this.test.get("Ci"), is("Cerium"));
+	}
+
+	@Test
+	public void wipeTheTable() {
+		final String[] elements = this.readAllElements();
+
+		this.test.register(elements);
+
+		assertThat(this.test.get("Pt"), is("Protactinium"));
+		assertThat(this.test.get("Cf"), is("Californium"));
+
+		// Wrong test
+		// assertThat(this.test.get("Iu"), is("Lionium"));
+		// Corrected test
+		assertThat(this.test.get("Iu"), is("Lionoium"));
+
+		System.out.println("Unregistered elements : ");
+		for (final String element : this.test.getUnregisteredElements()) {
+			System.out.println("\t" + element);
+		}
+	}
+
+	private String[] readAllElements() {
+		try (
+				InputStream inputStream = this.test.getClass().getResourceAsStream("/elements.txt");
+				Scanner scannerBuilder = new Scanner(inputStream, "UTF-8"); Scanner scanner = scannerBuilder.useDelimiter("\\A")) {
+			final String text = scanner.next();
+			return text.split("\r\n");
+		} catch (final IOException e) {
+			throw new RuntimeException("unable to read file", e);
+		}
+	}
+
 }
